@@ -19,7 +19,7 @@ const int NUM_JUGADORES = 4;
 const int NUM_FICHAS = 4;
 const int NUM_CASILLAS = 68;
 
-enum tColor {	//enumeracion de colores
+enum tColor {	// Enumeracion de colores
     Amarillo,
     Azul,
     Rojo,
@@ -38,9 +38,9 @@ struct tJugador {	// Color jugador y array tipo tFichas
 	tColor color;
 	tFichas fichas;
 };
-typedef tJugador tJugadores[NUM_JUGADORES]; //Array de 4 jugadores, ni idea de por qué
-typedef tCasilla tCasillas[NUM_CASILLAS]; //Array de 2x68 tCasilla, de nuevo ni idea de por qué no es una matriz bidimensional, pero bueno, enunciado de mierda.
-struct tJuego { //Toda esta mierda de codigo mal estructurado puesta en la misma struct
+typedef tJugador tJugadores[NUM_JUGADORES]; //Array de 4 jugadores
+typedef tCasilla tCasillas[NUM_CASILLAS]; //Array de 2x68 tCasilla
+struct tJuego { 
 	tCasillas casillas;
 	tJugadores jugadores;
 	tColor jugadorTurno;
@@ -90,6 +90,7 @@ int primeraPosible(tJuego& juego, int& casilla);
 
 int main() {
 
+    int casilla;
 	tJuego juego;
 
 
@@ -110,6 +111,7 @@ int primeraEn(tJuego& juego) {}
 int segundaEn(tJuego& juego) {}
 void saleFicha(tJuego& juego) {}
 void aCasita(tJuego& juego) {}
+void abrirPuente(tJuego& juego){}
 bool procesa5(tJuego& juego) {}
 bool procesa6(tJuego& juego) {}
 bool jugar(tJuego& juego) {}
