@@ -19,7 +19,7 @@ const int NUM_JUGADORES = 4;
 const int NUM_FICHAS = 4;
 const int NUM_CASILLAS = 68;
 
-enum tColor {	//enumeracion de colores
+enum tColor {	// Enumeracion de colores
     Amarillo,
     Azul,
     Rojo,
@@ -38,9 +38,9 @@ struct tJugador {	// Color jugador y array tipo tFichas
 	tColor color;
 	tFichas fichas;
 };
-typedef tJugador tJugadores[NUM_JUGADORES]; //Array de 4 jugadores, ni idea de por qué
-typedef tCasilla tCasillas[NUM_CASILLAS]; //Array de 2x68 tCasilla, de nuevo ni idea de por qué no es una matriz bidimensional, pero bueno, enunciado de mierda.
-struct tJuego { //Toda esta mierda de codigo mal estructurado puesta en la misma struct
+typedef tJugador tJugadores[NUM_JUGADORES]; //Array de 4 jugadores
+typedef tCasilla tCasillas[NUM_CASILLAS]; //Array de 2x68 tCasilla
+struct tJuego { 
 	tCasillas casillas;
 	tJugadores jugadores;
 	tColor jugadorTurno;
@@ -60,10 +60,10 @@ char colorALetra(tColor color);
 
 //FUNCIONES V2
 void iniciar(tJuego& juego);
-bool puente(tJuego& juego);
+bool puente(tJuego& juego, int i);
 int cuantasEn(tJuego& juego);
-int primeraEn(tJuego& juego);
-int segundaEn(tJuego& juego);
+int primeraEn(tJuego& juego, int casilla);
+int segundaEn(tJuego& juego, int casilla);
 void saleFicha(tJuego& juego);
 void aCasita(tJuego& juego);
 void abrirPuente(tJuego& juego);
@@ -90,26 +90,96 @@ int primeraPosible(tJuego& juego, int& casilla);
 
 int main() {
 
+    int casilla;
 	tJuego juego;
 
 
 }
 
 //FUNCIONES V1
-bool esSeguro(int casilla) {}
-int salidaJugador(int jugador) {}
-int zanataJugador(int jugador) {}
-string colorACadena(tColor color) {}
+bool esSeguro(int casilla) 
+{
+    switch (casilla) {
+
+    case 0: return true;
+    case 5: return true;
+    case 12: return true;
+    case 17: return true;
+    case 22: return true;
+    case 29: return true;
+    case 34: return true;
+    case 39: return true;
+    case 46: return true;
+    case 51: return true;
+    case 56: return true;
+    case 63: return true;
+
+    default: return false;
+    }
+}
+int salidaJugador(int jugador) 
+{
+    switch (jugador) {
+
+    case Amarillo: return 5;
+    case Azul: return 22;
+    case Rojo: return 39;
+    case Verde: return 56;
+
+    }
+}
+int zanataJugador(int jugador) 
+{
+    switch (jugador) {
+
+    case Amarillo: return 0;
+    case Azul: return 17;
+    case Rojo: return 34;
+    case Verde: return 51;
+
+    }
+}
+string colorACadena(tColor color) 
+{
+    switch (color) {
+
+    case Rojo: return "Rojo";
+    case Verde: return "Verde";
+    case Amarillo: return "Amarillo";
+    case Azul: return "Azul";
+
+    }
+}
 char colorALetra(tColor color) {}
 
 //FUNCIONES V2
 void iniciar(tJuego& juego) {}
-bool puente(tJuego& juego) {}
+bool puente(tJuego& juego, int i) 
+{   
+    if (juego.casillas[i].calle1 == juego.casillas[i].calle2){return true;}
+    else { return false; }
+
+}
 int cuantasEn(tJuego& juego) {}
-int primeraEn(tJuego& juego) {}
-int segundaEn(tJuego& juego) {}
+int primeraEn(tJuego& juego, int casilla)
+{
+    for (int i = 0; i < NUM_FICHAS; i++)
+    {
+        if (juego.jugadorTurno.fichas[i] == casilla) { return i; }
+        else { return -1; }
+    }
+}
+int segundaEn(tJuego& juego, int casilla) 
+{
+    for (int i = 4; i > 0; i--)
+    {
+        if (juego.jugadorTurno.fichas[i] == casilla) { return i; }
+        else { return -1; }
+    }
+}
 void saleFicha(tJuego& juego) {}
 void aCasita(tJuego& juego) {}
+void abrirPuente(tJuego& juego){}
 bool procesa5(tJuego& juego) {}
 bool procesa6(tJuego& juego) {}
 bool jugar(tJuego& juego) {}
