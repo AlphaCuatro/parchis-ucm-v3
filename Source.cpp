@@ -61,11 +61,11 @@ char colorALetra(tColor color);
 //FUNCIONES V2
 void iniciar(tJuego& juego);
 bool puente(tJuego& juego, int i);
-int cuantasEn(tJuego& juego);
+int cuantasEn(tJuego& juego, int casilla);
 int primeraEn(tJuego& juego, int casilla);
 int segundaEn(tJuego& juego, int casilla);
 void saleFicha(tJuego& juego);
-void aCasita(tJuego& juego);
+void aCasita(tJuego& juego, int casilla);
 void abrirPuente(tJuego& juego);
 bool procesa5(tJuego& juego);
 bool procesa6(tJuego& juego);
@@ -160,25 +160,60 @@ bool puente(tJuego& juego, int i)
     else { return false; }
 
 }
-int cuantasEn(tJuego& juego) {}
+int cuantasEn(tJuego& juego, int casilla) 
+{
+    int cuantas = 0;
+    
+    if (juego.casillas[casilla].calle1 != Ninguno;) { cuantas++; }
+    else if (juego.casillas[casilla].calle2 != Ninguno;) { cuantas = 2; }
+
+    return cuantas;
+}
 int primeraEn(tJuego& juego, int casilla)
 {
+    int primera = -1;
+
     for (int i = 0; i < NUM_FICHAS; i++)
     {
-        if (juego.jugadorTurno.fichas[i] == casilla) { return i; }
-        else { return -1; }
+        if (juego.jugadorTurno.fichas[i] == casilla) { primera = i; break; }
+ 
     }
+    return primera;
 }
 int segundaEn(tJuego& juego, int casilla) 
 {
+    int segunda = -1;
+
     for (int i = 4; i > 0; i--)
     {
-        if (juego.jugadorTurno.fichas[i] == casilla) { return i; }
-        else { return -1; }
+        if (juego.jugadorTurno.fichas[i] == casilla) { segunda = i; break; }
     }
+    return segunda;
 }
-void saleFicha(tJuego& juego) {}
-void aCasita(tJuego& juego) {}
+void saleFicha(tJuego& juego) 
+{
+    int zanata = zanataJugador(juego.jugadorTurno);
+    
+    if (juego.casillas[zanata].calle1 == Ninguno)
+    {
+        juego.casillas[zanata].calle2 = Ninguno;
+    }
+    else if (juego.casillas[zanata].calle1 != Ninguno)
+    {
+        juego.casillas[zanata].calle2 = juego.casillas[zanata].calle1;
+    }
+
+    juego.jugadorTurno = juego.casillas[zanata].calle1;
+}
+void aCasita(tJuego& juego, int casilla) 
+{
+    int ficha = segundaEn(juego.jugadores[juego.casillas[casilla].calle1], casilla);
+
+    juego.jugadores[juego.casillas[casilla].calle1].fichas[ficha] = -1;
+
+    juego.casillas[casilla].calle2 = Ninguno;
+
+}
 void abrirPuente(tJuego& juego){}
 bool procesa5(tJuego& juego) {}
 bool procesa6(tJuego& juego) {}
