@@ -156,22 +156,31 @@ char colorALetra(tColor color) {}
 void iniciar(tJuego& juego) {}
 bool puente(tJuego& juego, int i) 
 {   
-    if (juego.casillas[i].calle1 == juego.casillas[i].calle2){return true;}
-    else { return false; }
+    bool hayPuente = false;
+
+    if (juego.casillas[i].calle1 == juego.casillas[i].calle2){hayPuente = true;}
+    
+    return hayPuente;
 
 }
 int cuantasEn(tJuego& juego, int casilla) 
 {
     int cuantas = 0;
-    
-    if (juego.casillas[casilla].calle1 != Ninguno;) { cuantas++; }
+    if (juego.casillas[casilla].calle1 == Ninguno && juego.casillas[casilla].calle12 == Ninguno;)
+    {
+        for (int i = 0; i < NUM_JUGADORES; i++)
+        {
+            if (juego.jugadores[jugadorTurno].fichas[i] = casilla) { cuantas++; }
+        }
+    }
+    else if (juego.casillas[casilla].calle1 != Ninguno;) { cuantas = 1; }
     else if (juego.casillas[casilla].calle2 != Ninguno;) { cuantas = 2; }
 
     return cuantas;
 }
 int primeraEn(tJuego& juego, int casilla)
 {
-    int primera = -1;
+    int primera = -1;¨
 
     for (int i = 0; i < NUM_FICHAS; i++)
     {
@@ -207,16 +216,81 @@ void saleFicha(tJuego& juego)
 }
 void aCasita(tJuego& juego, int casilla) 
 {
-    int ficha = segundaEn(juego.jugadores[juego.casillas[casilla].calle1], casilla);
-
-    juego.jugadores[juego.casillas[casilla].calle1].fichas[ficha] = -1;
+    int ficha = segundaEn(juego.jugadores[juego.casillas[casilla].calle2], casilla);
+   
+    juego.jugadores[juego.casillas[casilla].calle2].fichas[ficha] = -1;
 
     juego.casillas[casilla].calle2 = Ninguno;
 
 }
 void abrirPuente(tJuego& juego){}
-bool procesa5(tJuego& juego) {}
-bool procesa6(tJuego& juego) {}
+bool procesa5(tJuego& juego)
+{   
+    bool puedeAbrir = false;
+    int zanata = zanataJugador(juego.jugadorTurno);
+    
+    if (juego.casillas[zanata].calle2 == Ninguno;)
+    {
+        puedeAbrir = true; 
+        saleFicha(juego.jugadores[jugadorTurno]);
+    }
+    else if (juego.casilla[zanata].calle2 != Ninguno)
+    {
+        if (juego.casilla[zanata].calle1 ==  juego.jugadorTurno)
+        {
+            puedeAbrir = true;
+            saleFicha(juego.jugadores[jugadorTurno]);
+        }
+        else
+        {
+            aCasita(juego.jugadores[juego.casillas[zanata].calle2].fichas, zanata);
+            juego.premio = 20;
+            saleFicha(juego.jugadores[jugadorTurno]);
+            puedeAbrir = true;
+        }
+    }
+    return puedeAbrir;
+}
+bool procesa6(tJuego& juego)
+{
+    bool pasaTurno = false, hayPuente = false;
+    int numPuentes = 0, puente1 = -2, puente2 = -2;
+    //puente1 y puente2 estan inicializados a -2 por si se diese el caso de que un puente esta en la casilla 0
+    juego.seisesConsecutivos++;
+    if (cuantasEn(juego.jugadores[jugadorTurno].fichas) == 0)
+    {
+        juego.tiradaActual = 7;
+        cout << "Como no tiene fichas en casa, cuenta 7!" << endl;
+    }
+    if (juego.seisesConsecutivos == 3)
+    {
+        if (juego.jugadores[jugadorTurno].fichas[juego.ultimaFichaMovida] > 100)
+        {
+            cout << "La ultima ficha movida esta en la subida a meta, se salva" << endl;
+        }
+        else if (juego.jugadores[jugadorTurno].fichas[juego.ultimaFichaMovida] < 100)
+        {
+            aCasita(juego.jugadores[jugadorTurno].fichas[juego.ultimaFichaMovida], juego.jugadores[jugadorTurno].fichas[juego.ultimaFichaMovida]);
+            cout << "Han salido 6 seises seguidos, la ultima ficha movida se va a casa" << endl;
+           
+        }
+        pasaTurno = true;
+    }
+    else if (juego.seisesConsecutivos != 3)
+    {
+        for (int i = 0; i < NUM_CASILLAS; i++)
+        {
+            if (puente(juego.casillas[i], i)) 
+            {
+                numPuentes++; 
+                if (puente1 == -2) { puente1 = juego.casillas[i] }
+                else(puente2 = juego.casillas[i]; break;)
+            }
+        }
+
+    }
+    return pasaTurno;
+}
 bool jugar(tJuego& juego) {}
 bool puedeMover(tJuego& juego) {}
 void mover(tJuego& juego) {}
