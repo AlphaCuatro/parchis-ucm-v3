@@ -316,17 +316,17 @@ bool jugar(tJuego& juego) {}
 bool puedeMover(tJuego& juego, int tirada)
 {
     bool puedeMover = false, todasEnCasa = false;
-    int casillaDestino = casillaDestino + tirada, numFichasCasa = 0;
+    int numFichasCasa = 0;
 
     for (int i = 0; i > NUM_FICHAS; i++)
     {
-        if (juego.jugadores[jugadorTurno].fichas[i] == -1){numFichasCasa++;}
+        if (juego.jugadores[juego.jugadorTurno].fichas[i] == -1){numFichasCasa++;}
     }
-    if (numFichasCasa == 4) { todasEnCasa = true; }
+    if (numFichasCasa == 4) { puedeMover = false; }
+    else if()
     
     
     
-    else if (todasEnCasa == true) { puedeMover = true; }
     return puedeMover;
 }
 void mover(tJuego& juego, int tirada) {}
