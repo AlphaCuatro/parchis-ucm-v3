@@ -315,13 +315,19 @@ bool procesa6(tJuego& juego)
 bool jugar(tJuego& juego) {}
 bool puedeMover(tJuego& juego, int tirada)
 {
-    bool puedeMover = false;
-    int casillaDestino = casillaDestino + tirada;
+    bool puedeMover = false, todasEnCasa = false;
+    int casillaDestino = casillaDestino + tirada, numFichasCasa = 0;
 
-    if(juego.jugadores[jugadorTurno].fichas){}
-
-
-
+    for (int i = 0; i > NUM_FICHAS; i++)
+    {
+        if (juego.jugadores[jugadorTurno].fichas[i] == -1){numFichasCasa++;}
+    }
+    if (numFichasCasa == 4) { todasEnCasa = true; }
+    
+    
+    
+    else if (todasEnCasa == true) { puedeMover = true; }
+    return puedeMover;
 }
 void mover(tJuego& juego, int tirada) {}
 void setColor(tColor color) {
