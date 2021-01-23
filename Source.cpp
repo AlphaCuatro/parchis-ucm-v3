@@ -32,7 +32,7 @@ struct tCasilla {	// Casilla compuesta por dos mitades tColor
 	tColor calle2;
 };
 struct tFichas {	// Array 4 enteros, siendo cada uno el lugar donde esta la ficha
-	int numFicha[4];
+	int numFicha[4];    
 };
 struct tJugador {	// Color jugador y array tipo tFichas
 	tColor color;
@@ -67,12 +67,12 @@ int primeraEn(tJuego& juego, int casilla);
 int segundaEn(tJuego& juego, int casilla);
 void saleFicha(tJuego& juego);
 void aCasita(tJuego& juego, int casilla);
-void abrirPuente(tJuego& juego, int casilla);
+void abrirPuente(tJuego& juego, int casillaOrig, int casillaDest, int ficha);
 bool procesa5(tJuego& juego);
 bool procesa6(tJuego& juego);
 bool jugar(tJuego& juego);
-bool puedeMover(tJuego& juego, int tirada);
-void mover(tJuego& juego, int tirada);
+bool puedeMover(tJuego& juego, int& casilla);
+void mover(tJuego& juego, int& casilla, int ficha);
 void setColor(tColor color);
 void iniciaColores();
 void pausa();
@@ -91,7 +91,7 @@ int primeraPosible(tJuego& juego, int& casilla);
 
 int main() {
 
-    int casilla, tirada, i;
+    int casilla, tirada;
 	tJuego juego;
 
 
@@ -161,11 +161,11 @@ bool puente(tJuego& juego, int i)
 int cuantasEn(tJuego& juego, int casilla) 
 {
     int cuantas = 0;
-    if (juego.casillas[casilla].calle1 == Ninguno && juego.casillas[casilla].calle2 == Ninguno)
+    if (casilla == -1)
     {
-        for (int i = 0; i < NUM_JUGADORES; i++)
+        for (int i = 0; i < NUM_FICHAS; i++)
         {
-            if (juego.jugadores[juego.jugadorTurno].fichas[i] == casilla) { cuantas++; }
+            if (juego.jugadores[juego.jugadorTurno].fichas.numFicha[i] == casilla) { cuantas++; }
         }
     }
     else if (juego.casillas[casilla].calle1 != Ninguno) { cuantas = 1; }
@@ -179,7 +179,7 @@ int primeraEn(tJuego& juego, int casilla)
 
     for (int i = 0; i < NUM_FICHAS; i++)
     {
-        if (juego.jugadorTurno.fichas[i] == casilla) { primera = i; break; }
+        if (juego.jugadores[juego.jugadorTurno].fichas.numFicha[i] == casilla) { primera = i; break; }
  
     }
     return primera;
@@ -190,7 +190,7 @@ int segundaEn(tJuego& juego, int casilla)
 
     for (int i = 4; i > 0; i--)
     {
-        if (juego.jugadorTurno.fichas[i] == casilla) { segunda = i; break; }
+        if (juego.jugadores[juego.jugadorTurno].fichas.numFicha[i] == casilla) { segunda = i; break; }
     }
     return segunda;
 }
@@ -218,7 +218,13 @@ void aCasita(tJuego& juego, int casilla)
     juego.casillas[casilla].calle2 = Ninguno;
 
 }
-void abrirPuente(tJuego& juego, int casilla){}
+void abrirPuente(tJuego& juego, int casillaOrig, int casillaDest, int ficha)
+{
+    ficha = segundaEn(juego.jugadores[juego.casillas[casillaOrig].calle2].fichas, casillaOrig);
+    cout << "Se ha abierto el puente de la casilla " << casillaOrig << endl;
+    mover(juego.jugadores[juego.jugadorTurno].fichas[ficha], casillaDest, ficha);
+    juego.ultimaFichaMovida = juego.jugadores[juego.jugadorTurno].fichas[ficha];
+}
 bool procesa5(tJuego& juego)
 {   
     bool puedeAbrir = false;
@@ -281,13 +287,14 @@ bool procesa6(tJuego& juego)
             {
                 numPuentes++;
                 if (puente1 == -2) { puente1 = i; }
-                else{puente2 == i; i = NUM_CASILLAS;}
+                else{puente2 = i; i = NUM_CASILLAS;}
             }
         }
         if (numPuentes != 0)
         {
             int puente = 0;
-            if (numPuentes == 1) { abrirPuente(juego.jugadores[juego.jugadorTurno], puente1);}
+            int ficha = segundaEn(juego.jugadores[juego.jugadorTurno].fichas, puente1);
+            if (numPuentes == 1) { abrirPuente(juego.jugadores[juego.jugadorTurno], puente1, puente1 + 6, ficha );}
             else
             {
                 cout << "El jugador tiene dos puentes" << endl;
@@ -298,9 +305,9 @@ bool procesa6(tJuego& juego)
                 {
                     cin >> puente;
                     cout << endl;
-                    if (puente == 1) { abrirPuente(juego.jugadores[juego.jugadorTurno].fichas, puente1);}
-                    else if (puente == 2) { abrirPuente(juego.jugadores[juego.jugadorTurno].fichas, puente2); }
-                    else if(puente != 1 && puente != 2){cout << "Numero introducido incorrecto, escribe otro numero : "}
+                    if (puente == 1) { abrirPuente(juego.jugadores[juego.jugadorTurno].fichas, puente1, puente + 6, ficha);}
+                    else if (puente == 2) { ficha = segundaEn(juego.jugadores[juego.jugadorTurno], puente2); abrirPuente(juego.jugadores[juego.jugadorTurno].fichas, puente2,puente2 + 6, ficha); }
+                    else if (puente != 1 && puente != 2) { cout << "Numero introducido incorrecto, escribe otro numero : "; }
 
                 }
                 
@@ -313,24 +320,58 @@ bool procesa6(tJuego& juego)
     return procesa6;
 }
 bool jugar(tJuego& juego) {}
-bool puedeMover(tJuego& juego, int tirada)
+bool puedeMover(tJuego& juego, int& casilla)
 {
-    bool puedeMover = false, todasEnCasa = false;
-    int numFichasCasa = 0;
-
-    for (int i = 0; i > NUM_FICHAS; i++)
+    bool puedeMover = false;
+    int contador = 0, casillaDestino = casilla + juego.tiradaActual;
+    if (cuantasEn(juego.jugadores[juego.jugadorTurno].fichas, -1) == 4) { puedeMover = false; }
+    while (contador != juego.tiradaActual)
     {
-        if (juego.jugadores[juego.jugadorTurno].fichas[i] == -1){numFichasCasa++;}
+        if (juego.jugadores[juego.jugadorTurno].fichas == zanataJugador(juego.jugadorTurno)) { casilla = 101; puedeMover = true; }
+        else if (juego.jugadores[juego.jugadorTurno].fichas > 100) { casilla++; puedeMover = true; }
+        else if (juego.jugadores[juego.jugadorTurno].fichas < 100 && puente(juego.casillas[casillaDestino], casillaDestino))
+        {
+            puedeMover = false;
+        }
+        else if (casilla == 108 && casilla != casillaDestino) { puedeMover = false; }
+        else if (puente(juego.casillas[casilla], casilla) && esSeguro(casilla)) { puedeMover = false; }
+        contador++;
     }
-    if (numFichasCasa == 4) { puedeMover = false; }
-    else if()
-    
     
     
     return puedeMover;
 }
-void mover(tJuego& juego, int tirada) {}
-void setColor(tColor color) {
+void mover(tJuego& juego, int& casilla, int ficha)
+{
+    int casillaOrig = casilla - juego.tiradaActual;
+    int cuantasEnCasa = 0; 
+    if (casilla == 108) 
+    {
+        juego.premio = 10;
+        cout << "Enhorabuena! Has llegado a la meta, cuenta 10 como premio." << endl;
+    }
+    if (segundaEn(juego.jugadores[juego.jugadorTurno].fichas, casillaOrig) == -1)
+    {
+        juego.casillas[casillaOrig].calle1 = Ninguno;
+        
+    }
+    else if (segundaEn(juego.jugadores[juego.jugadorTurno].fichas, casillaOrig) != -1)
+    {
+        juego.casillas[casillaOrig].calle1 = juego.casillas[casillaOrig].calle2;
+        juego.casillas[casillaOrig].calle2 = Ninguno;
+    }
+    if (juego.casillas[casilla].calle1 != juego.jugadorTurno)
+    {
+        cout << "Has comido la ficha del jugador " << juego.casillas[casilla].calle1;
+        aCasita(juego.jugadores[juego.casillas[casilla].calle1], casilla); 
+        juego.premio = 20;    
+       
+    }
+    juego.jugadores[juego.jugadorTurno].fichas[ficha] = casilla;
+    
+    
+}
+void setColor(tColor color) { 
     switch (color) {
     case Azul:
         cout << "\x1b[34;107m";
