@@ -18,16 +18,15 @@ using namespace std;
 const int NUM_FICHAS = 4;
 const int  NUM_JUGADORES = 4;
 const int NUM_CASILLAS = 68;
-
-const bool modoDebug = false;
-const string Archivo = "pruebas.txt";
+const bool debug = false;
+const string Archivo = "archivo.txt";
 
 //  DECLARACIÓN DE TIPOS Y ESTRUCTURAS
 
-typedef int tFichas[NUM_FICHAS];
 typedef int tCasillas[NUM_CASILLAS];
+typedef int tFichas[NUM_FICHAS];
 typedef int tJugadores[NUM_JUGADORES];
-typedef enum {
+typedef enum tColor {
 
     Amarillo, 
     Azul, 
@@ -36,7 +35,7 @@ typedef enum {
     Gris, 
     Ninguno 
 
-} tColor;
+};
 
 struct tJugador {
 
@@ -50,13 +49,15 @@ struct tCasilla {
 };
 struct tJuego {
 
+    int seises = 0;
+    int tirada = 0;
+    int ultimaFichaMovida = 0;
+    int premio = 0;
+
     tCasilla casillas[NUM_CASILLAS];
     tJugador jugadores[NUM_JUGADORES];
     tColor turno = Ninguno;
-    int tirada = 0;
-    int premio = 0;
-    int seises = 0;
-    int ultimaFichaMovida = 0;
+
 };
 
 //  DECLARACIÓN DE FUNCIONES
@@ -804,22 +805,18 @@ int primeraEn(const tFichas jugador, int casilla, tJuego juego) {
 
 }
 int colorAJugador(tColor color) {
-    int returned;
+
+    int a;
+
     switch (color) {
-    case Amarillo:
-        returned = 0;
-        break;
-    case Azul:
-        returned = 1;
-        break;
-    case Rojo:
-        returned = 2;
-        break;
-    case Verde:
-        returned = 3;
-        break;
+
+    case Amarillo:  a = 0; break;
+    case Azul:      a = 1; break;
+    case Rojo:      a = 2; break;
+    case Verde:     a = 3; break;
     }
-    return returned;
+
+    return a;
 }
 int zanataJugador(int jugadorfin) { 
     int casillafin = 0;
@@ -874,7 +871,8 @@ int eligeColor() {
         if (cin.fail()) {
 
             cin.clear();
-            cin.ignore(200, '\n');
+            cin.ignore(200);
+            cout << endl;
         }
         system("pause");;
         system("CLS");
@@ -887,7 +885,9 @@ int eligeColor() {
 
 }
 int tirarDado(bool& fin) {
+
     int numDado;
+
     if (modoDebug) {
         cout << "Dado: (Introduce 0 para salir): ";
         cin >> numDado;
@@ -902,19 +902,18 @@ int tirarDado(bool& fin) {
 
 }
 string colorACadena(tColor color) {   
+ 
     string strColor;
-    if (color == 0) {
-        strColor = "Amarillo";
+
+    switch (color) {
+
+    case 0: charColor = 'M';
+    case 1: charColor = 'A';
+    case 2: charColor = 'R';
+    case 3: charColor = 'V';
+
     }
-    else if (color == 1) {
-        strColor = "Azul";
-    }
-    else if (color == 2) {
-        strColor = "Rojo";
-    }
-    else if (color == 3) {
-        strColor = "Verde";
-    }
+
     return strColor;
 }
 char colorALetra(tColor color) { 
@@ -922,29 +921,13 @@ char colorALetra(tColor color) {
     char charColor;
 
     switch (color) {
-    case 0:
-        charColor = 'M';
-    case 1:
-        charColor = 'A';
-    case 2:
-        charColor = 'R';
-    case 3:
-        charColor = 'V';
+
+    case 0: charColor = 'M';
+    case 1: charColor = 'A';
+    case 2: charColor = 'R';
+    case 3: charColor = 'V';
     }
-    /*
-    if (color == 0) {
-        charColor = 'M';
-    }
-    else if (color == 1) {
-        charColor = 'A';
-    }
-    else if (color == 2) {
-        charColor = 'R';
-    }
-    else if (color == 3) {
-        charColor = 'V';
-    }
-    */
+
     return charColor;
 };
 void mostrar(const tJuego& juego) {
