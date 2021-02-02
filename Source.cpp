@@ -26,7 +26,7 @@ const string Archivo = "archivo.txt";
 typedef int tCasillas[NUM_CASILLAS];
 typedef int tFichas[NUM_FICHAS];
 typedef int tJugadores[NUM_JUGADORES];
-typedef enum tColor {
+typedef enum {
 
     Amarillo, 
     Azul, 
@@ -35,7 +35,7 @@ typedef enum tColor {
     Gris, 
     Ninguno 
 
-};
+} tColor;
 
 struct tJugador {
 
@@ -48,14 +48,14 @@ struct tCasilla {
     tColor calle2;
 };
 struct tJuego {
-
+    
+    int premio = 0;
     int seises = 0;
     int tirada = 0;
     int ultimaFichaMovida = 0;
-    int premio = 0;
 
-    tCasilla casillas[NUM_CASILLAS];
-    tJugador jugadores[NUM_JUGADORES];
+    tCasilla casillas[NUM_CASILLAS] = { };
+    tJugador jugadores[NUM_JUGADORES] = { };
     tColor turno = Ninguno;
 
 };
@@ -64,8 +64,15 @@ struct tJuego {
 
 int eligeColor();                                                                                           //
 int zanataJugador(int jugadorfin);                                                                          //
+int primeraEn(tFichas jugador, int casilla, const tJuego juego);                                            //
+int segundaEn(const tFichas jugador, int casilla);                                                          //
+int cuantasEn(const tFichas jugador, int casilla);                                                          //
+int salidaJugador(int jugador);                                                                             //
+int colorAJugador(tColor color);                                                                            //
+int tirarDado(bool& fin);                                                                                   //
+
 void mostrar(const tJuego& juego);                                                                          //
-void salidaacasa(int casilla, int& casilla2, int jugador, int jugador2, int& i);                            //
+void aCasita(int casilla, int& casilla2, int jugador, int jugador2, int& i);                                //
 void jugar(tJuego& juego, bool& fin);                                                                       //
 void saleFicha(tJuego& juego, int ficha);                                                                   //
 void setColor(tColor color);                                                                                //
@@ -74,18 +81,15 @@ void iniciaColores();                                                           
 void usarPremio(tJuego& juego);                                                                             //
 void mover(tJuego& juego, int ficha, int casilla);                                                          //
 void cargar(tJuego& juego);                                                                                 //
-bool esFinJuego(tJuego juego);                                                                              //
+void reiniciarTurno(tJuego& juego, int primerJugador);                                                      //
+
+bool finJuego(tJuego juego);                                                                                //
 bool esSeguro(int seguro);                                                                                  //
 bool puedeMover(const tJuego juego, int ficha, int& casilla);                                               //
 bool procesa5(tJuego& juego);                                                                               //
 bool procesa6(tJuego& juego);                                                                               //
 bool puente(const tCasillas calle1, const tCasillas calle2, int casilla);                                   //
-int primeraEn(tFichas jugador, int casilla, const tJuego juego);                                            //
-int segundaEn(const tFichas jugador, int casilla);                                                          //
-int cuantasEn(const tFichas jugador, int casilla);                                                          //
-int salidaJugador(int jugador);                                                                             //
-int colorAJugador(tColor color);                                                                            //
-int tirarDado(bool& fin);                                                                                   //
+
 string colorACadena(tColor color);                                                                          //
 char colorALetra(tColor color);                                                                             //
 
@@ -99,142 +103,189 @@ char colorALetra(tColor color);                                                 
 int main() {
     
     time(NULL);
-    int firstplayer = rand() % 4;
+
+    int primerJugador = rand() % 4;
     bool fin = false;
     tJuego juego;
     tColor jugador = tColor(eligeColor());
-    juego.turno = tColor(firstplayer);
+    juego.turno = tColor(primerJugador);
+
     iniciar(juego);
-    while (!esFinJuego(juego) && !fin) {
+
+    while (!finJuego(juego)) {
+
         mostrar(juego);
         jugar(juego, fin);
 
         if (juego.premio != 0) {
             usarPremio(juego);
         }
-        juego.turno = tColor(juego.turno + 1);
-        if ((firstplayer + juego.turno) > 3) { juego.turno = tColor(firstplayer + juego.turno - 4); }
-        firstplayer = 0;
-        system("pause");
-        system("CLS");
 
+        reiniciarTurno(juego, primerJugador);
     }
-    cout << "\n" << "FIN DEL JUEGO";
+
+    cout << endl << "FIN DEL JUEGO";
     return 0;
 }
 void cargar(tJuego& juego) {
 
     ifstream archivo;
     int jugador, casilla;
-    int tiradas[100];
+    int tiradas[1000];
+    bool stop = false;
+
+    label:
+
+    cout << "Presione una tecla para continuar...";
+    system("PAUSE");
 
     archivo.open("archivo.txt");
 
-    if (archivo.is_open()) {
+    if (!archivo.is_open()) {
+        cout << "ARCHIVO NO ENCONTRADO";
+        goto label;
+    }
+
+    else if (archivo.is_open()) {
+
         for (int i = 0; i < NUM_JUGADORES; i++)
+
             for (int f = 0; f < NUM_FICHAS; f++) {
+
                 archivo >> casilla;
                 juego.jugadores[i].fichas[f] = casilla;
+
                 if ((casilla >= 0) && (casilla < NUM_CASILLAS))
+
                     if (juego.casillas[casilla].calle1 == Gris)
                         juego.casillas[casilla].calle1 = tColor(i);
                     else
                         juego.casillas[casilla].calle2 = tColor(i);
             }
+
         archivo >> jugador;
         juego.turno = tColor(jugador);
-        bool breakk = false;
-        for (int i = 0; !breakk; i++) {
+
+        for (int i = 0; !stop; i++) {
+
             archivo >> tiradas[i];
-            if (tiradas[i] == -1) { breakk = true; }
+            if (tiradas[i] == -1) { stop = true; }
         }
+
         archivo.close();
     }
 }
 void usarPremio(tJuego& juego) {
 
     int tirada = juego.tirada;
-    int a;
-    bool b = false;
+    int ficha;
+    int error = 0;
+    bool tienePremio = false;
+    bool stop = false;
+
 
     juego.tirada = juego.premio;
     mostrar(juego);
 
-    cout << "Has ganado un premio, cuenta " << juego.premio << " casillas con las siguientes fichas" << endl;
-    cout << "Elige una opción: " << endl;
+    cout << "Has ganado un premio, puedes contar " << juego.premio << " casillas con las siguientes fichas:" << endl;
+
+    // Print fichas que puedan utilizar juego.premio
+
     for (int i = 0; i < NUM_FICHAS; i++) {
+
         if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
-            cout << i + 1 << " ficha puede moverse " << juego.premio << " casillas!" << endl;
-            b = true;
+
+            cout << "La ficha " <<  i + 1 << " puede moverse " << juego.premio << " casillas!" << endl;
+            tienePremio = true;
         }
     }
-    if (b) {
-        cin >> a;
-        bool breakk = false;
-        int error = 0;
-        while (a > 4 || a < 1 || !breakk || cin.fail()) {
-            if (error > 0) {
-                cout << "Elige una:       ";
+
+    if (tienePremio) {
+
+        cout << "Elige la ficha con la que quieras utilizar el premio: ";
+
+        cin >> ficha;
+
+        while (ficha > 4 || ficha < 1 || !stop) {
+
+            if (error != 0) {
+                cout << "Elige una opción válida: ";
             }
+
             error++;
-            if (!cin.good()) {
-                cin.clear();
-                cin.ignore(200, '\n');
-            }
-            for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
-                if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == a) {
-                    breakk = true;
+
+            for (int i = 0; i < NUM_FICHAS && !stop; i++) {
+
+                if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == ficha) {
+                    stop;
                 }
             }
         }
-        if (a > 0 && a < 5 && puedeMover(juego, a - 1, juego.jugadores[juego.turno].fichas[a - 1])) {
-            mover(juego, a - 1, juego.jugadores[juego.turno].fichas[a - 1] + juego.premio);
+
+        if (ficha > 0 && ficha < 5 && puedeMover(juego, ficha - 1, juego.jugadores[juego.turno].fichas[ficha - 1])) {
+            mover(juego, ficha - 1, juego.jugadores[juego.turno].fichas[ficha - 1] + juego.premio);
         }
     }
-    else { cout << "No tienes ninguna ficha con la que puedas utilizar el premio" << endl; }
+    // Si premio no puede ser utilizado
+
+    else { cout << "No tienes ninguna ficha con la que puedas mover " << juego.premio << " casillas." << endl; }
+
     system("pause");
+
+    // Reset del sistema de premios
+
     juego.premio = 0;
     juego.tirada = tirada;
 }
 void mover(tJuego& juego, int ficha, int casilla) {
 
-    int casillaN = casilla;
-    if (juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 == Ninguno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 == juego.turno) { //por si solo hay una ficha de el jugador en esa casilla
+    int casillaDestino = casilla;
+
+    // Despeja calle1 si solo hay calle1
+
+    if (juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 == Ninguno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 == juego.turno) { 
         juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 = Ninguno;
     }
 
-    if (juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 != Ninguno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 != juego.turno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 == juego.turno) {//por si están dos fichas de diferentes colores en un seguro
+    // Despeja calle2, pasa su valor fichasEnMeta calle1
+
+    else if (juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 != Ninguno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 != juego.turno && juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 == juego.turno) {
         juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle1 = juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2;
+        juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 = Ninguno;
     }
-    juego.casillas[juego.jugadores[juego.turno].fichas[ficha]].calle2 = Ninguno;
+
 
     if (juego.jugadores[juego.turno].fichas[ficha] == zanataJugador(juego.turno)) {
         juego.jugadores[juego.turno].fichas[ficha] = 100 + juego.tirada;
-        casillaN = juego.tirada + 100;
+        casillaDestino = juego.tirada + 100;
     }
+
     else {
-        juego.jugadores[juego.turno].fichas[ficha] += juego.tirada;
+
+        juego.jugadores[juego.turno].fichas[ficha] = juego.jugadores[juego.turno].fichas[ficha] + juego.tirada;
+        
         if (juego.jugadores[juego.turno].fichas[ficha] > 67 && juego.jugadores[juego.turno].fichas[ficha] < 101) {
             juego.jugadores[juego.turno].fichas[ficha] -= 68;
-            casillaN -= 68;
+            casillaDestino = casillaDestino - 68;
         }
     }
 
 
-    if (juego.casillas[casillaN].calle1 == Ninguno) {
-        juego.casillas[casillaN].calle1 = juego.turno;
+    if (juego.casillas[casillaDestino].calle1 == Ninguno) {
+        juego.casillas[casillaDestino].calle1 = juego.turno;
     }
-    else if (juego.casillas[casillaN].calle1 != Ninguno && juego.casillas[casillaN].calle1 != juego.turno && juego.casillas[casillaN].calle2 == Ninguno && esSeguro(casillaN)) { //si es seguro y la casilla de la calle1 ya está ocupada
-        juego.casillas[casillaN].calle2 = juego.turno;
+    else if (juego.casillas[casillaDestino].calle1 != Ninguno && juego.casillas[casillaDestino].calle1 != juego.turno && juego.casillas[casillaDestino].calle2 == Ninguno && esSeguro(casillaDestino)) { //si es seguro y la casilla de la calle1 ya está ocupada
+        juego.casillas[casillaDestino].calle2 = juego.turno;
     }
-    else if (juego.casillas[casillaN].calle1 != Ninguno && juego.casillas[casillaN].calle1 == juego.turno && juego.casillas[casillaN].calle2 == Ninguno) { //si el propio jugador ya tiene una ficha en esa casilla
-        juego.casillas[casillaN].calle2 = juego.turno;
+    else if (juego.casillas[casillaDestino].calle1 != Ninguno && juego.casillas[casillaDestino].calle1 == juego.turno && juego.casillas[casillaDestino].calle2 == Ninguno) { //si el propio jugador ya tiene una ficha en esa casilla
+        juego.casillas[casillaDestino].calle2 = juego.turno;
     }
-    else if (juego.casillas[casillaN].calle1 != Ninguno && juego.casillas[casillaN].calle1 != juego.turno && juego.casillas[casillaN].calle2 == Ninguno && !esSeguro(casillaN) && juego.jugadores[juego.turno].fichas[ficha] < 101) { //si el jugador se come a otra ficha
+    else if (juego.casillas[casillaDestino].calle1 != Ninguno && juego.casillas[casillaDestino].calle1 != juego.turno && juego.casillas[casillaDestino].calle2 == Ninguno && !esSeguro(casillaDestino) && juego.jugadores[juego.turno].fichas[ficha] < 101) { //si el jugador se come ficha otra ficha
         for (int i = 0; i < NUM_FICHAS; i++) {
-            if (juego.jugadores[juego.casillas[casillaN].calle1].fichas[i] == casillaN) {
-                juego.jugadores[juego.casillas[casillaN].calle1].fichas[i] = -1;
-                juego.casillas[casillaN].calle1 = juego.turno;
+
+            if (juego.jugadores[juego.casillas[casillaDestino].calle1].fichas[i] == casillaDestino) {
+                juego.jugadores[juego.casillas[casillaDestino].calle1].fichas[i] = -1;
+                juego.casillas[casillaDestino].calle1 = juego.turno;
                 juego.premio = 20;
             }
         }
@@ -256,22 +307,32 @@ void saleFicha(tJuego& juego, int ficha) {
 
 
 }
-void jugar(tJuego& juego, bool& fin) {
+void jugar(tJuego& juego, bool& fin) { // Funcion importante,
+
+    bool stop = false;
+    int error = 0;
+    int ficha = 0;
+    int siete = 0;
+    int casilla = 0;
+    bool a = false;
+    int casillapasada = 0;
+    int opcion = 6;
+
 
     juego.seises = 0;
-    int f = 0;
     juego.tirada = 8;
-    int siete = 0;
-    int c = 0;
+
     for (int i = 0; i < NUM_FICHAS; i++) {
         if (juego.jugadores[tColor(juego.turno)].fichas[i] != -1) {
-            c++;
+            casilla++;
         }
     }
-    if (c == 4) { siete++; }
-    while ((juego.tirada == 6 + siete || f == 0) && !fin && juego.seises != 3) {
-        int opcion = 6;
-        f++;
+
+    if (casilla == 4) { siete++; }
+
+    while ((juego.tirada == 6 + siete || ficha == 0) && !fin && juego.seises != 3) {
+
+        ficha++;
         cout << "Turno para jugador " << colorACadena(juego.turno) << "." << endl;
         juego.tirada = tirarDado(fin);
         if (juego.tirada == 6) {
@@ -281,9 +342,7 @@ void jugar(tJuego& juego, bool& fin) {
         if (juego.tirada == 6 || juego.tirada == 7) { juego.seises++; }
         if (!procesa6(juego)) {
             if (juego.tirada == 7) { juego.tirada = 6; }
-            int c = 0;
-            bool b = false;
-            int casillapasada = 0;
+
             switch (juego.tirada)
             {
             case 1:
@@ -292,13 +351,12 @@ void jugar(tJuego& juego, bool& fin) {
                     casillapasada = juego.jugadores[juego.turno].fichas[i];
                     if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
                         cout << i + 1 << ": La ficha puede moverse " << juego.tirada << " casillas" << endl;
-                        c++;
+                        casilla++;
                     }
                 }
-                if (c > 0) {
-                    bool breakk = false;
-                    int error = 0;
-                    while (opcion > 4 || opcion < 1 || !breakk || cin.fail()) {
+                if (casilla > 0) {
+
+                    while (opcion > 4 || opcion < 1 || !stop || cin.fail()) {
                         if (error > 0) {
                             cout << "Elige una:       ";
                         }
@@ -309,14 +367,14 @@ void jugar(tJuego& juego, bool& fin) {
                             cin.clear();
                             cin.ignore(200, '\n');
                         }
-                        for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
+                        for (int i = 0; i < NUM_FICHAS && !stop; i++) {
                             casillapasada = juego.jugadores[juego.turno].fichas[i];
                             if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == opcion) {
-                                breakk = true;
+                                stop = true;
                             }
                         }
                     }
-                    c = 0;
+                    casilla = 0;
                 }
                 break;
 
@@ -326,13 +384,12 @@ void jugar(tJuego& juego, bool& fin) {
                     casillapasada = juego.jugadores[juego.turno].fichas[i];
                     if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
                         cout << i + 1 << ": La ficha puede moverse " << juego.tirada << " casillas" << endl;
-                        c++;
+                        casilla++;
                     }
                 }
-                if (c > 0) {
-                    bool breakk = false;
-                    int error = 0;
-                    while (opcion > 4 || opcion < 1 || !breakk) {
+                if (casilla > 0) {
+
+                    while (opcion > 4 || opcion < 1 || !stop) {
                         if (error > 0) {
                             cout << "Elige una:       ";
                         }
@@ -343,14 +400,14 @@ void jugar(tJuego& juego, bool& fin) {
                             cin.clear();
                             cin.ignore(200, '\n');
                         }
-                        for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
+                        for (int i = 0; i < NUM_FICHAS && !stop; i++) {
                             casillapasada = juego.jugadores[juego.turno].fichas[i];
                             if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == opcion) {
-                                breakk = true;
+                                stop = true;
                             }
                         }
                     }
-                    c = 0;
+                    casilla = 0;
                 }
                 break;
             case 3:
@@ -359,13 +416,12 @@ void jugar(tJuego& juego, bool& fin) {
                     casillapasada = juego.jugadores[juego.turno].fichas[i];
                     if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
                         cout << i + 1 << ": La ficha puede moverse " << juego.tirada << " casillas" << endl;
-                        c++;
+                        casilla++;
                     }
                 }
-                if (c > 0) {
-                    bool breakk = false;
-                    int error = 0;
-                    while (opcion > 4 || opcion < 1 || !breakk) {
+                if (casilla > 0) {
+
+                    while (opcion > 4 || opcion < 1 || !stop) {
                         if (error > 0) {
                             cout << "Elige una:       ";
                         }
@@ -376,14 +432,14 @@ void jugar(tJuego& juego, bool& fin) {
                             cin.clear();
                             cin.ignore(200, '\n');
                         }
-                        for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
+                        for (int i = 0; i < NUM_FICHAS && !stop; i++) {
                             casillapasada = juego.jugadores[juego.turno].fichas[i];
                             if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == opcion) {
-                                breakk = true;
+                                stop = true;
                             }
                         }
                     }
-                    c = 0;
+                    casilla = 0;
                 }
                 break;
             case 4:
@@ -392,10 +448,10 @@ void jugar(tJuego& juego, bool& fin) {
                     casillapasada = juego.jugadores[juego.turno].fichas[i];
                     if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
                         cout << i + 1 << ": ficha puede moverse " << juego.tirada << " casillas." << endl;
-                        c++;
+                        casilla++;
                     }
                 }
-                if (c > 0) {
+                if (casilla > 0) {
                     bool breakk = false;
                     int error = 0;
                     while (opcion > 4 || opcion < 1 || !breakk) {
@@ -416,22 +472,22 @@ void jugar(tJuego& juego, bool& fin) {
                             }
                         }
                     }
-                    c = 0;
+                    casilla = 0;
                 }
                 break;
             case 5:
 
-                for (int i = 0; i < NUM_FICHAS && !b; i++) {
+                for (int i = 0; i < NUM_FICHAS && !a; i++) {
 
                     if (juego.jugadores[juego.turno].fichas[i] == -1 && procesa5(juego)) {
                         saleFicha(juego, i);
 
-                        b = true;
-                        c++;
+                        a = true;
+                        casilla++;
                     }
                 }
 
-                if (c == 0) {
+                if (casilla == 0) {
                     for (int i = 0; i < NUM_FICHAS; i++) {
                         casillapasada = juego.jugadores[juego.turno].fichas[i];
                         if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
@@ -442,10 +498,9 @@ void jugar(tJuego& juego, bool& fin) {
                 }
 
 
-                if (c == 0) {
-                    bool breakk = false;
-                    int error = 0;
-                    while (opcion > 4 || opcion < 1 || !breakk) {
+                if (casilla == 0) {
+
+                    while (opcion > 4 || opcion < 1 || !stop) {
                         if (error > 0) {
                             cout << "Elige una:       ";
                         }
@@ -456,10 +511,10 @@ void jugar(tJuego& juego, bool& fin) {
                             cin.clear();
                             cin.ignore(200, '\n');
                         }
-                        for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
+                        for (int i = 0; i < NUM_FICHAS && !stop; i++) {
                             casillapasada = juego.jugadores[juego.turno].fichas[i];
                             if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == opcion) {
-                                breakk = true;
+                                stop = true;
                             }
                         }
                     }
@@ -471,13 +526,12 @@ void jugar(tJuego& juego, bool& fin) {
                     casillapasada = juego.jugadores[juego.turno].fichas[i];
                     if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i])) {
                         cout << i + 1 << ": La ficha puede moverse " << juego.tirada << " casillas" << endl;
-                        c++;
+                        casilla++;
                     }
                 }
-                if (c > 0) {
-                    bool breakk = false;
-                    int error = 0;
-                    while (opcion > 4 || opcion < 1 || !breakk) {
+                if (casilla > 0) {
+
+                    while (opcion > 4 || opcion < 1 || !stop) {
                         if (error > 0) {
                             cout << "Elige una:       ";
                         }
@@ -488,14 +542,14 @@ void jugar(tJuego& juego, bool& fin) {
                             cin.clear();
                             cin.ignore(200, '\n');
                         }
-                        for (int i = 0; i < NUM_FICHAS && !breakk; i++) {
+                        for (int i = 0; i < NUM_FICHAS && !stop; i++) {
                             casillapasada = juego.jugadores[juego.turno].fichas[i];
                             if (puedeMover(juego, i, juego.jugadores[juego.turno].fichas[i]) && i + 1 == opcion) {
-                                breakk = true;
+                                stop = true;
                             }
                         }
                     }
-                    c = 0;
+                    casilla = 0;
                 }
                 break;
             }
@@ -520,33 +574,28 @@ void jugar(tJuego& juego, bool& fin) {
         if (siete == 1 && juego.tirada != 7 && juego.tirada == 6) { juego.tirada += siete; }
     }
 }
-void iniciar(tJuego& juego) {
+void iniciar(tJuego& juego) { // Inicializa tablero, aleatorios y randomiza primer turno
+
+    srand(time(NULL)); // Inicializador de num. pseudo-aleatorios
+    setColor(Ninguno); // Hace que el fondo de la primera tirada se muestre completamente en blanco, en vez de en negro. No debería funcionar así, pero no hay drawbacks, así que ahí se queda de momento.
+    juego.turno = tColor(0 + rand() % (3)); // Randomizador de primer turno
 
     for (int i = 0; i < NUM_CASILLAS; i++) {
-        juego.casillas[i].calle1 = Gris;
-        juego.casillas[i].calle2 = Gris;
+
+        juego.casillas[i].calle1 = Ninguno;
+        juego.casillas[i].calle2 = Ninguno;
     }
 
-    srand(time(NULL));
-    juego.turno = tColor(0 + rand() % (3));
 
     for (int j = 0; j < NUM_JUGADORES; j++) {
+
         for (int i = 0; i < NUM_FICHAS; i++) {
+
             juego.jugadores[j].fichas[i] = -1;
         }
     }
 
-    for (int i = 0; i < NUM_CASILLAS; i++) {
-
-        if (juego.casillas[i].calle1 == Gris) {
-
-            juego.casillas[i].calle1 = Ninguno;
-        }
-        if (juego.casillas[i].calle2 == Gris) {
-
-            juego.casillas[i].calle2 = Ninguno;
-        }
-    }
+    
 }
 bool puente(const tJuego juego, int casilla) { 
 
@@ -648,10 +697,12 @@ bool procesa5(tJuego& juego) {
     return a;
 }
 bool puedeMover(const tJuego juego, int ficha, int& casilla) { 
-    int premio = 0;
 
+    int premio = 0;
     int casillafin = casilla + juego.tirada;
     bool ok = true;
+    int casillareal = 0;
+
     if (casillafin > 67 && casillafin < 101) {
         casillafin -= 68;
     }
@@ -660,7 +711,7 @@ bool puedeMover(const tJuego juego, int ficha, int& casilla) {
     }
     if (juego.jugadores[juego.turno].fichas[ficha] == zanataJugador(juego.turno)) {
         for (int i = 1; i <= juego.tirada && ok; i++) { 
-            int casillareal = 100 + i;
+            casillareal = 100 + i;
 
             if (casillareal == 109) {
                 ok = false;
@@ -691,93 +742,103 @@ bool puedeMover(const tJuego juego, int ficha, int& casilla) {
             }
         }
     }
-    if (juego.casillas[casillafin].calle1 != Ninguno && juego.casillas[casillafin].calle2 == juego.casillas[casillafin].calle1 && juego.jugadores[juego.turno].fichas[ficha] < 100) { //por si en la casilla que va a caer ya hay dos fichas
+    if (juego.casillas[casillafin].calle1 != Ninguno && juego.casillas[casillafin].calle2 == juego.casillas[casillafin].calle1 && juego.jugadores[juego.turno].fichas[ficha] < 100) { //por si en la casilla que va ficha caer ya hay dos fichas
         ok = false;
     }
     return ok;
 }
-bool esFinJuego(const tJuego juego) {
+bool finJuego(const tJuego juego) { // Devuelve true si las 4 fichas de un jugador están en meta.
 
     bool finJuego = false;
-    int a = 0;
+    int fichasEnMeta = 0;
 
-    for (int j = 0; j < NUM_JUGADORES && a != 4; j++) {
-        a = 0;
-        for (int i = 0; i < NUM_FICHAS; i++) {
-            if (juego.jugadores[j].fichas[i] == 108) { a++; }
-            if (a == 4) { finJuego = true; }
+    for (int numJugador = 0; numJugador < NUM_JUGADORES; numJugador++) {
+
+        for (int numFicha = 0; numFicha < NUM_FICHAS; numFicha++) {
+
+            if (juego.jugadores[numJugador].fichas[numFicha] == 108) { fichasEnMeta++; }
+            if (fichasEnMeta == 4) { finJuego = true; break; }
         }
     }
+
     return finJuego;
 }
-bool esSeguro(int s) {
+bool esSeguro(int s) { // Devuelve true si la casilla es segura. En caso contrario, devuelve false
 
-    bool ok = false;
+    bool esSeguro = false;
 
     switch (s) {
 
-    case 0: ok = true; break;
-    case 5: ok = true; break;
-    case 12: ok = true; break;
-    case 17: ok = true; break;
-    case 22: ok = true; break;
-    case 29: ok = true; break;
-    case 34: ok = true; break;
-    case 39: ok = true; break;
-    case 46: ok = true; break;
-    case 51: ok = true; break;
-    case 56: ok = true; break;
-    case 63: ok = true; break;
+    case 0:  esSeguro = true; break;
+    case 5:  esSeguro = true; break;
+    case 12: esSeguro = true; break;
+    case 17: esSeguro = true; break;
+    case 22: esSeguro = true; break;
+    case 29: esSeguro = true; break;
+    case 34: esSeguro = true; break;
+    case 39: esSeguro = true; break;
+    case 46: esSeguro = true; break;
+    case 51: esSeguro = true; break;
+    case 56: esSeguro = true; break;
+    case 63: esSeguro = true; break;
 
-    default: ok = false; break;
+    default: esSeguro = false; break;
     }
 
-    return ok;
+    return esSeguro;
 }
-int cuantasEn(const tFichas jugador, int casilla) {
-    int c = 0;
-    for (int i = 0; i < NUM_FICHAS; i++) {
-        if (jugador[i] == casilla) {
-            c++;
+int cuantasEn(const tFichas jugador, int casilla) { // Devuelve el número de fichas que habitan en la casilla 
 
-        }
-    }
-    return c;
-}
-int segundaEn(const tFichas jugador, int casilla) {
-    int s = -1;
-    int c = 0;
-    int c2 = 0;
+    int fichasEnCasilla = 0;
+
     for (int i = 0; i < NUM_FICHAS; i++) {
 
         if (jugador[i] == casilla) {
-            c++;
+            fichasEnCasilla++;
         }
     }
 
-    if (c == 1) {
-        for (int i = 0; i < NUM_FICHAS && s == -1; i++) {
-
-            if (jugador[i] == casilla) {
-                s = i;
-            }
-        }
-    }
-    else if (c == 2) {
-        for (int i = 0; i < NUM_FICHAS && s == -1; i++) {
-
-            if (jugador[i] == casilla) {
-                c2++;
-            }
-            if (c2 == 2) {
-                s = i;
-            }
-        }
-
-    }
-    return s;
+    return fichasEnCasilla;
 }
-int primeraEn(const tFichas jugador, int casilla, tJuego juego) {
+int segundaEn(const tFichas jugador, int casilla) { // Devuelve el int correspondiente fichasEnMeta la ficha que esté en segundo lugar en esa casilla
+
+    int segundaEn = -1;
+    int a = 0;
+    int b = 0;
+
+    for (int i = 0; i < NUM_FICHAS; i++) {
+
+        if (jugador[i] == casilla) {
+            a++;
+        }
+    }
+
+    if (a == 1) {
+        for (int i = 0; i < NUM_FICHAS && segundaEn == -1; i++) {
+
+            if (jugador[i] == casilla) {
+                segundaEn = i;
+            }
+        }
+    }
+
+    else if (a == 2) {
+        for (int i = 0; i < NUM_FICHAS && segundaEn == -1; i++) {
+
+            if (jugador[i] == casilla) {
+                b++;
+            }
+
+            if (b == 2) {
+                segundaEn = i;
+            }
+        }
+
+    }
+
+    return segundaEn;
+}
+int primeraEn(const tFichas jugador, int casilla, tJuego juego) { // Devuelve el int correspondiente fichasEnMeta la ficha que esté en primer lugar en esa casilla
 
     int f = -1;
     int c = 0;
@@ -791,7 +852,7 @@ int primeraEn(const tFichas jugador, int casilla, tJuego juego) {
         }
     }
 
-    if (juego.casillas[casilla].calle2 != juego.casillas[casilla].calle1 && juego.casillas[casilla].calle2 != Ninguno) {
+    if ((juego.casillas[casilla].calle2 != juego.casillas[casilla].calle1) && (juego.casillas[casilla].calle2 != Ninguno)) {
         c++;
     }
     if (c == 2) {
@@ -804,53 +865,50 @@ int primeraEn(const tFichas jugador, int casilla, tJuego juego) {
     return f;
 
 }
-int colorAJugador(tColor color) {
+int colorAJugador(tColor color) { // Devuelve el tColor correspondiente fichasEnMeta cada jugador (int)
 
-    int a;
+    int jugador = 0;
 
     switch (color) {
 
-    case Amarillo:  a = 0; break;
-    case Azul:      a = 1; break;
-    case Rojo:      a = 2; break;
-    case Verde:     a = 3; break;
+    case Amarillo:  jugador = 0; break;
+    case Azul:      jugador = 1; break;
+    case Rojo:      jugador = 2; break;
+    case Verde:     jugador = 3; break;
     }
 
-    return a;
+    return jugador;
 }
-int zanataJugador(int jugadorfin) { 
-    int casillafin = 0;
-    switch (jugadorfin)
-    {
-    case 0:
-        casillafin = 0;
-        break;
-    case 1:
-        casillafin = 17;
-        break;
-    case 2:
-        casillafin = 34;
-        break;
-    case 3:
-        casillafin = 51;
-        break;
+int zanataJugador(int jugador) {  // Devuelve la zanata correspondiente fichasEnMeta cada jugador
+   
+    int casillaZanata = 0;
+    
+    switch (jugador) {
+    case 0: casillaZanata = 0;  break;
+    case 1: casillaZanata = 17; break;
+    case 2: casillaZanata = 34; break;
+    case 3: casillaZanata = 51; break;
     }
-    return casillafin;
+
+    return casillaZanata;
 }
-int salidaJugador(int jugador) { 
-    int casillaIni = 0;
+int salidaJugador(int jugador) { // Devuelve la casilla de salida correspondiente fichasEnMeta cada jugador
+
+    int casillaSalida = 0;
+    
     switch (jugador)
     {
-    case 0: casillaIni = 5; break;
-    case 1: casillaIni = 22; break;
-    case 2: casillaIni = 39; break;
-    case 3: casillaIni = 56; break;
+    case 0: casillaSalida = 5; break;
+    case 1: casillaSalida = 22; break;
+    case 2: casillaSalida = 39; break;
+    case 3: casillaSalida = 56; break;
     }
-    return casillaIni;
-}
-int eligeColor() { 
 
-    int jugador = 5; 
+    return casillaSalida;
+}
+int eligeColor() {  // Permite elegir el color del jugador, contiene path anti-error implementado con labels. (Eficiencia ligeramente superior fichasEnMeta while-loop, aunque despreciable fichasEnMeta bajo nivel y más "feo")
+
+    int jugador = 0; 
 
     while (jugador < 1 || jugador > 4) {
 
@@ -866,59 +924,62 @@ int eligeColor() {
         cout << " ------------------------------------ " << endl;
         cout << "" << endl;
         cout << "    Opcion: ";
+
+        label:
+
         cin >> jugador;
+        cout << endl;
 
-        if (cin.fail()) {
+        while (jugador < 1 || jugador > 4) {
 
-            cin.clear();
-            cin.ignore(200);
-            cout << endl;
+            cout << "Elige una opcion valida: ";
+                goto label;
         }
-        system("pause");;
+
         system("CLS");
+        system("PAUSE");
 
-        if (jugador > 0 && jugador < 5) {
-
-            return jugador;
-        } 
+        return jugador;
+        
     }
 
 }
-int tirarDado(bool& fin) {
+int tirarDado(bool& terminarDebug) { // Si debug está activo solicita input (0 para salir). Si no, randomiza un número del 1 al 6 sobre un pseudo-aleatorio basado en tiempo local.
 
-    int numDado;
+    int dado;
 
-    if (modoDebug) {
-        cout << "Dado: (Introduce 0 para salir): ";
-        cin >> numDado;
-        if (numDado == 0) { fin = true; }
-        cin.get(); 
-                                                    
+    if (debug) {
+
+        cout << "Dado: (0 para salir): ";
+        cin >> dado;
+
+        if (dado == 0) { terminarDebug = true; }
+                                            
     }
-    else
-        numDado = rand() % 6 + 1;
 
-    return numDado;
+    else dado = rand() % 6 + 1;
+
+    return dado;
 
 }
-string colorACadena(tColor color) {   
+string colorACadena(tColor color) {   // tColor --> String correspondiente
  
     string strColor;
 
     switch (color) {
 
-    case 0: charColor = 'M';
-    case 1: charColor = 'A';
-    case 2: charColor = 'R';
-    case 3: charColor = 'V';
+    case 0: strColor =  "Amarillo";
+    case 1: strColor = "Azul";
+    case 2: strColor = "Rojo";
+    case 3: strColor = "Verde";
 
     }
 
     return strColor;
 }
-char colorALetra(tColor color) { 
+char colorALetra(tColor color) {  // tColor --> Char correspondiente
 
-    char charColor;
+    char charColor = '!';
 
     switch (color) {
 
@@ -926,11 +987,12 @@ char colorALetra(tColor color) {
     case 1: charColor = 'A';
     case 2: charColor = 'R';
     case 3: charColor = 'V';
+    
     }
 
     return charColor;
 };
-void mostrar(const tJuego& juego) {
+void mostrar(const tJuego& juego) { // Función dada, muestra tablero
     int casilla, ficha;
     tColor jug;
 
@@ -1094,7 +1156,7 @@ void mostrar(const tJuego& juego) {
     cout << endl << endl;
     setColor(Gris);
 }
-void setColor(tColor color) {
+void setColor(tColor color) { // Función dada, relaciona el color en terminal con su tColor correspondiente
     switch (color) {
     case Azul:
         cout << "\x1b[34;107m";
@@ -1114,7 +1176,7 @@ void setColor(tColor color) {
         break;
     }
 }
-void iniciaColores() {
+void iniciaColores() { // Función dada, inicia colores
 #ifdef _WIN32
     for (DWORD stream : {STD_OUTPUT_HANDLE, STD_ERROR_HANDLE}) {
         DWORD mode;
@@ -1126,4 +1188,13 @@ void iniciaColores() {
         }
     }
 #endif
+}
+void reiniciarTurno(tJuego& juego, int primerJugador) { // Agrupa el último paso de jugar,  en lo relacionado con los turnos.
+
+    juego.turno = tColor(juego.turno + 1);
+    if ((primerJugador + juego.turno) > 3) { juego.turno = tColor(primerJugador + juego.turno - 4); }
+    primerJugador = 0;
+    system("pause");
+    system("CLS");
+
 }
